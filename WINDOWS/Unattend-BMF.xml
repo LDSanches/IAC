@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<unattend xmlns="urn:schemas-microsoft-com:unattend">
+	<settings pass="windowsPE">
+		<component name="Microsoft-Windows-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+			<DiskConfiguration>
+				<Disk wcm:action="add">
+					<DiskID>0</DiskID> 
+					<WillWipeDisk>true</WillWipeDisk> 
+					<CreatePartitions>
+						<!-- System partition -->
+						<CreatePartition wcm:action="add">
+							<Order>1</Order> 
+							<Type>Primary</Type> 
+							<Size>350</Size> 
+						</CreatePartition>
+						<!-- Windows partition -->
+						<CreatePartition wcm:action="add">
+							<Order>2</Order> 
+							<Type>Primary</Type> 
+							<Extend>true</Extend> 
+						</CreatePartition>
+					</CreatePartitions>
+					<ModifyPartitions>
+						<!-- System partition -->
+						<ModifyPartition wcm:action="add">
+							<Order>1</Order> 
+							<PartitionID>1</PartitionID> 
+							<Label>System</Label> 
+							<Format>NTFS</Format> 
+							<Active>true</Active> 
+						</ModifyPartition>
+							<!-- Windows partition -->
+							<ModifyPartition wcm:action="add">
+								<Order>2</Order> 
+								<PartitionID>2</PartitionID> 
+								<Label>Windows</Label> 
+								<Letter>C</Letter> 
+								<Format>NTFS</Format> 
+							</ModifyPartition>
+					</ModifyPartitions>
+				</Disk>
+			<WillShowUI>OnError</WillShowUI> 
+			</DiskConfiguration>
+			<ImageInstall>
+				<OSImage>
+					<WillShowUI>OnError</WillShowUI>
+					<InstallTo>
+						<DiskID>0</DiskID>
+						<PartitionID>2</PartitionID>
+					</InstallTo>
+					<InstallFrom>
+						<!-- <Path>\\10.0.0.121\deploymentshare$\Operating Systems\Windows Server 2012 R2\sources\install.wim</Path> -->
+						<Path>\\10.0.0.121\softwares\windows\w2k12r2\sources\install.wim</Path>
+						<MetaData>
+							<Key>/IMAGE/INDEX</Key>
+							<Value>1</Value>
+						</MetaData>
+					</InstallFrom>
+				</OSImage>
+			</ImageInstall>
+			<UserData>
+				<AcceptEula>true</AcceptEula>
+				<ProductKey>
+					<Key>MNFHF-DWC9K-M2V9F-KG4Q3-H2X8M</Key>
+				</ProductKey>
+			</UserData>
+			<EnableNetwork>true</EnableNetwork>
+		</component>
+		<component name="Microsoft-Windows-International-Core-WinPE" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+			<SetupUILanguage>
+				<UILanguage>en-us</UILanguage>
+			</SetupUILanguage>
+			<InputLocale>en-us</InputLocale>
+			<SystemLocale>en-us</SystemLocale>
+			<UILanguage>en-us</UILanguage>
+			<UserLocale>en-us</UserLocale>
+		</component>
+    </settings>
+</unattend>
+

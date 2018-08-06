@@ -1,0 +1,19 @@
+---
+- name: Server Provisionaing
+  hosts: 10.0.60.100
+  vars:
+    - name_server:
+    - profile: 
+    - vlan_verde:
+    - vlan_amarela:
+
+  tasks:
+  - name: Provisinamento do Host Windows "{{ name_server }}"
+    shell: hammer host create --name "{{ name_server }}" --comment "Provisionamento via ansible" --organization "B3" --location "SP" --hostgroup "{{ profile }}"  --compute-resource "labvcenter" --compute-profile "4-W2K12R2" --build "True" --enabled "true" --compute-attributes "start=1" --interface="primary=true,provision=true,type=interface,subnet_id=1,ip={{ vlan_verde }}" --interface="type=interface,subnet_id=2,ip={{ vlan_amarela }}"
+
+  - name: Aguardado a conclusao do instalacao
+    shell: "hammer host info --name {{ name_server }}.domain.lab | grep 'IP address:  10.0' | awk '{print $3}'"
+    register: ip_name_server
+
+  - debug: var=ip_name_server
+ 

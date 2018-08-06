@@ -1,0 +1,24 @@
+---
+- name: create
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  tasks:
+
+  - name: add_host
+    infoblox:
+      server: 10.0.60.52
+      username: admin
+      password: infoblox
+#      api_version: 1.6
+      action: add_host
+      host: test01.intranet.int
+      address: 10.0.0.1
+#      dns_view: default
+      network: 10.0.0.0/16
+#      address: 10.0.0.10
+      ttl: None
+    register: result
+
+  - name: Do stuff with the result
+    debug: msg="debug output here"

@@ -1,0 +1,19 @@
+---
+- hosts: all
+  gather_facts: yes
+
+  tasks:
+  - win_dns_client:
+      adapter_names: Ethernet0
+      ipv4_addresses: 10.0.0.121
+
+  - win_domain_membership:
+      dns_domain_name: domain.lab
+      domain_admin_user: administrator@domain.lab
+      domain_admin_password: suporte
+      state: domain
+    register: domain_state
+
+  - win_reboot:
+    when: domain_state.reboot_required
+

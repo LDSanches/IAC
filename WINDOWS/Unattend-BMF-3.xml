@@ -1,0 +1,81 @@
+<unattend xmlns="urn:schemas-microsoft-com:unattend">
+	<settings pass="windowsPE">
+		<component name="Microsoft-Windows-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State">
+			<DiskConfiguration>
+				<Disk wcm:action="add">
+					<CreatePartitions>
+						<CreatePartition wcm:action="add">
+							<Order>1</Order>
+							<Size>350</Size>
+							<Type>Primary</Type>
+						</CreatePartition>
+						<CreatePartition wcm:action="add">
+							<Extend>true</Extend>
+							<Order>2</Order>
+							<Type>Primary</Type>
+						</CreatePartition>
+					</CreatePartitions>
+					<ModifyPartitions>
+						<ModifyPartition wcm:action="add">
+							<Active>true</Active>
+								<Format>NTFS</Format>
+								<Label>Boot</Label>
+								<Order>1</Order>
+								<PartitionID>1</PartitionID>
+						</ModifyPartition>
+						<ModifyPartition wcm:action="add">
+							<Format>NTFS</Format>
+							<Label>System</Label>
+							<Order>2</Order>
+							<PartitionID>2</PartitionID>
+						</ModifyPartition>
+					</ModifyPartitions>
+					<DiskID>0</DiskID>
+					<WillWipeDisk>true</WillWipeDisk>
+				</Disk>
+			</DiskConfiguration>
+			<ImageInstall>
+				<OSImage>
+					<WillShowUI>OnError</WillShowUI>
+					<InstallTo>
+						<DiskID>0</DiskID>
+						<PartitionID>2</PartitionID>
+					</InstallTo>
+					<InstallFrom>
+						<!-- <Path>\\10.0.0.121\deploymentshare$\Operating Systems\Windows Server 2012 R2\sources\install.wim</Path> -->
+						<Path>\\10.0.0.121\Softwares\Windows\W2K12R2\sources\install.wim</Path>
+						<MetaData>
+							<Key>/IMAGE/INDEX</Key>
+							<Value>1</Value>
+						</MetaData>
+					</InstallFrom>
+				</OSImage>
+			</ImageInstall>
+			<Display>
+				<ColorDepth>16</ColorDepth>
+				<HorizontalResolution>1024</HorizontalResolution>
+				<RefreshRate>60</RefreshRate>
+				<VerticalResolution>768</VerticalResolution>
+			</Display>
+			<ComplianceCheck>
+				<DisplayReport>OnError</DisplayReport>
+			</ComplianceCheck>
+			<UserData>
+				<AcceptEula>true</AcceptEula>
+				<ProductKey>
+					<Key>MNFHF-DWC9K-M2V9F-KG4Q3-H2X8M</Key>
+				</ProductKey>
+			</UserData>
+		</component>
+		<component name="Microsoft-Windows-International-Core-WinPE" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+			<SetupUILanguage>
+				<UILanguage>en-US</UILanguage>
+			</SetupUILanguage>
+			<InputLocale>0409:00000409</InputLocale>
+			<SystemLocale>en-US</SystemLocale>
+			<UILanguage>en-US</UILanguage>
+			<UserLocale>en-US</UserLocale>
+		</component>
+	</settings>
+</unattend>
+

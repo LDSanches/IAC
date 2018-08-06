@@ -1,0 +1,96 @@
+---
+- name: Teste de conexao com switch
+  hosts: all
+  connection: local
+  gather_facts: yes
+
+  tasks:
+
+  - name: executando show version no switch
+    ios_command:
+      commands: show version
+    register: show_version
+
+  - debug: var=show_version
+
+  - name: Configurando syslog
+    ios_config:
+      lines:
+        - logging buffered 100000 debugging
+        - logging 10.10.10.10
+        - logging trap informational
+
+
+  - name: configurar ntp server
+    ios_config:
+      lines:
+        - clock summer-time BRST recurring 3 Sun Oct 0:00 3 Sun Feb 0:00
+        - ntp server 200.160.0.8 prefer
+        - ntp server 200.160.0.8
+        - ntp server 200.160.0.8
+
+  - name: configurar time zone
+    ios_config:
+      lines:
+        - clock timezone BRT -3
+
+  - name: Configuracao de timestamps
+    ios_config:
+      lines:
+        - service timestamps debug datetime localtime
+        - service timestamps log datetime localtime
+        - service password-encryption
+   
+  - name: Configuracao de snmp
+    ios_config:
+      lines:
+#        - access-list 99 permit 172.29.12.164 0.0.0.0
+#        - access-list 99 permit 172.29.16.209 0.0.0.0 
+#        - access-list 99 permit 172.29.16.208 0.0.0.0  
+#        - access-list 99 permit 172.27.16.209 0.0.0.0 
+#        - access-list 99 permit 172.27.16.208 0.0.0.0
+#        - access-list 99 permit 172.29.16.200 0.0.0.0
+#        - access-list 99 permit 172.29.16.201 0.0.0.0
+#        - access-list 99 permit 172.29.16.202 0.0.0.0
+#        - access-list 99 permit 172.29.16.203 0.0.0.0
+#        - access-list 99 permit 172.29.16.207 0.0.0.0
+#        - access-list 99 permit 172.27.16.201 0.0.0.0
+#        - access-list 99 permit 172.27.16.202 0.0.0.0
+#        - access-list 99 permit 172.16.19.2 0.0.0.0
+#        - access-list 99 permit 172.27.13.72 0.0.0.0
+#        - access-list 99 permit 172.29.64.0 0.0.15.255
+#        - access-list 99 permit 172.28.64.0 0.0.15.255
+#        - access-list 99 permit 172.27.64.0 0.0.15.255
+#        - access-list 99 permit 172.29.64.98 0.0.0.0
+#        - access-list 99 permit 172.29.64.99 0.0.0.0
+#        - access-list 99 permit 172.29.64.100 0.0.0.0
+#        - access-list 99 permit 172.29.64.101 0.0.0.0
+#        - access-list 99 permit 172.29.64.102 0.0.0.0
+#        - access-list 99 permit 172.29.64.103 0.0.0.0
+#        - access-list 99 permit 172.29.64.104 0.0.0.0
+#        - access-list 99 permit 172.29.64.105 0.0.0.0
+        - snmp-server community MNTCORPRD036691RD RO 99
+        - snmp-server community MNTCORPRD036691WR RW 99
+        - snmp-server location BVMF
+        - snmp-server contact DO-CISR
+        - snmp-server enable traps
+
+
+  - name: configuracao do banner
+    ios_banner:
+      banner: login
+      text: |
+        ==========================================================================
+        = ATENCAO!! ESTE SISTEMA E RESTRITO APENAS A PESSOAS AUTORIZADAS!        =
+        = Se voce nao tem ou nao sabe se tem a autorizacao necessaria para o     =
+        = acesso a este sistema, desconecte-se agora.                            =
+        = Toda acao executada neste sistema e  logada, e estas informacoes podem =
+        = ser utilizadas para qualquer fim definido pelo proprietario deste.     =
+        = Se voce nao concorda com esta politica, desconecte-se agora. VERSAO 2  =
+        ==========================================================================
+      state: present
+
+
+      
+  
+

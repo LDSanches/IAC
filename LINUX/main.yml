@@ -1,0 +1,7 @@
+---
+- name: Configurações de post install do Linux RHEL
+  hosts: all
+  roles:
+    - linux_post_install
+
+ 

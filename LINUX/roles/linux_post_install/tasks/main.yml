@@ -1,0 +1,373 @@
+---
+# tasks file for linux_post_install
+#
+
+#Seguindo recomendações da Planilha Cronograma de Atividades - Red Hat
+# Item 5.1
+
+- name: Instalacao de grupos de pacotes
+  shell: yum groupinstall Base Core -y
+
+- name: Instalando pacotes necessarios
+  yum:
+    name: "{{ pkgs_add }}"
+    state: latest
+  ignore_errors: yes
+
+- name: Desativar SELinux
+  lineinfile:
+    path: /etc/sysconfig/selinux
+    regexp: '^SELINUX='
+    line: 'SELINUX=disabled'
+
+# As boas praticas de segurança recomenda que seja gerado um hash da senha e o mesmo informado no playbook, para gerar o hash os seguintes passos foram realizados:
+# pip install passlib
+# python -c "from passlib.hash import sha512_crypt; import getpass; print sha512_crypt.encrypt(getpass.getpass())"
+# Password: 
+# $6$rounds=656000$.wpJfy9qdWbmQ2fc$zFEe9V1oghSOFkE8UVFuDi8UhY3d1oWkxB.VQrwSyRzi93CsDyjsYLxWac9MvQ.2td9Ufy5MDCK2Unr88cXe4/
+#
+#Mais informaçções: See http://docs.ansible.com/ansible/faq.html#how-do-i-generate-crypted-passwords-for-the-user-module for details on various ways to generate these password values
+- name: Definir senha do root
+  user:
+    name: root
+    update_password: always
+    password: "$6$rounds=656000$erwpIOe45u1pAdyj$bs8nh2rwb2icv.9jcM7A1m1JVPAhqGNq3MNUmimwgcdGTr39.rmPRJ3AzOuMgfI4EGGhFHfZlOqfJyUrceIf21"
+
+# Desabilitando Firewall
+- name: Disable firewall
+  service:
+    name: firewalld
+    state: stopped
+    enabled: no
+
+#Seguindo a Planilha Mapeamento_Requisitos_Linux
+#Item 1 - disable_NM_RHEL7
+
+- name: Disable Network Manager
+  service:
+    name: NetworkManager
+    state: stopped
+    enabled: no
+
+#Item 2 - network_config_rhel7
+
+#Item 5  - ssh_conf
+#O documentos tem um modelo de arquivo e o hardening tem outro
+- name: Ajustes do ssh.conf
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: root 
+    group: root
+    mode: 0600
+  with_items:
+    - { src: sshd_config, dest: /etc/ssh/sshd_config }
+    - { src: ssh_config, dest: /etc/ssh/ssh_config }
+  notify: Reload_ssh
+
+#Item 6 - resolv_conf_std
+- name: Ajuste resolv.conf
+  template:
+    src: resolv.conf.j2
+    dest: /etc/resolv.conf
+    owner: root
+    group: root
+    mode: 0644
+
+#Item 7 - authorized_keys_blackbird
+- name: directory .ssh
+  file:
+    path: /root/.ssh
+    state: directory
+    mode: 0700
+
+# Item 7 - authorized_keys_blackbird 
+- name: authorized keys blackbird
+  copy:
+    src: authorized_keys
+    dest: /root/.ssh/authorized_keys
+    owner: root
+    group: root
+    mode: 0600
+
+#Item 8 - disable_ipv6
+- name: Desabilitando IPV6 no /etc/hosts
+  lineinfile:
+    path: /etc/hosts
+    regexp: '^::1'
+    state: absent
+
+#Item 8 - disable_ipv6
+- name: Desabilitando IPV6 no /etc/sysconfig/network
+  lineinfile:
+    path: /etc/sysconfig/network
+    regexp: '^NETWORKING_IPV6=.*'
+    line: 'NETWORKING_IPV6=no'
+    owner: root
+    group: root
+    owner: 0644
+
+#Item 8 - disable_ipv6
+- name: Desabilitando IPV6 no modprobe
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: root 
+    group: root
+    mode: 0600
+  with_items:
+    - { src: ipv6, dest: /etc/modprobe.d/ipv6 }
+    - { src: ipv6.conf, dest: /etc/modprobe.d/ipv6.conf }
+
+#Item 9 - chrony_conf_spa
+- name: Ajuste chrony.conf spa
+  copy:
+    src: chrony.conf
+    dest: /etc/chrony.conf
+    owner: root 
+    group: root
+    mode: 0600
+  notify: Reload_chronyd
+
+#Item 10 - pam_emagent
+- name: Ajustando o /etc/pam.d/emagent 
+  copy:
+    src: emagent
+    dest: /etc/pam.d/emagent
+    owner: root 
+    group: root
+    mode: 0600
+
+#Item 10 - pam_emagent
+- name: Criando link libpam
+  file:
+    src: /lib/libpam.so.0
+    dest: /lib/libpam.so 
+    owner: root
+    group: root
+    state: link
+
+#Item 11 - update_rhel7_prod
+
+#Item 12 - updates
+- name: Update rhel prod
+  yum:
+    name: '*'
+    state: latest
+    exclude: sblim-sfcb sblim-sfcc
+
+#Item 13 - sysstat
+- name: Ajuste do sysstat
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: root 
+    group: root
+    mode: 0644
+  with_items:
+    - { src: cron_sysstat, dest: /etc/cron.d/sysstat }
+    - { src: sysconfig_sysstat, dest: /etc/sysconfig/sysstat }
+
+#Item 14 - sendmail_conf
+- name: install sendmail
+  yum:
+    name: "{{ pkgs_sendmail }}"
+    state: latest
+
+#Item 14 - sendmail_conf
+- name: backup do arquivo de configuração /etc/mail/sendmail.mc
+  shell: cp -f /etc/mail/sendmail.mc /etc/mail/sendmail.mc.`date +%Y%m%d%H%M%S`
+
+#Item 14 - sendmail_conf
+- name: Ajustando o sendmail_conf
+  copy:
+    src: sendmail.mc
+    dest: /etc/mail/sendmail.mc
+    owner: root
+    group: root
+    mode: 0644
+  register: sendmail_file
+
+#Item 14 - sendmail_conf
+- name: Compilando configuração do sendmail
+  shell: make -C /etc/mail
+  when: sendmail_file.changed
+
+#Item 15 - install_java_1.8
+- name: Instalando Java
+  file:
+    path: "{{ item }}"
+    state: directory
+  with_items:
+    - /opt/java
+    - /export
+
+#Item 15 - install_java_1.8
+- name: 
+  file:
+    path: /opt/java/jdk-8u112-linux-x64
+    state: absent
+
+- debug: msg="Baixando Java"
+#Item 15 - install_java_1.8
+#- name: Baixando jdk
+#  get_url:
+#     url: http://$DEPSRV/files/java/jdk-8u112-linux-x64.tar.gz 
+#     dest: /export/jdk-8u112-linux-x64.tar.gz
+#     mode: 0644
+
+- debug: msg="Descompactando Java"
+#Item 15 - install_java_1.8
+#- name: Descompactando java
+#  unarchive:
+#    src: /export/jdk-8u112-linux-x64.tar.gz
+#    dest: /opt/java
+
+- debug: msg="Removendo pacote java.tar"
+#Item 15 - install_java_1.8
+#- name: Removendo pacote java.tar
+#  file:
+#    path: /export/jdk-8u112-linux-x64.tar.gz
+#    state: absent
+
+#Item 16 - enable_ldap_prd_dr_XV_RHEL7
+- debug: msg='authconfig-tui --enableldap --enableldapauth --ldapserver="ldaps://ldpcor70001ah-vip.intraservice.corp:636 ldaps://ldpcor70008p.intraservice.corp:636 ldaps://ldpcor70002ah-vip.intraservice.corp:636 ldaps://ldpcor70010p.intraservice.corp:636" --ldapbasedn=ou=prod,dc=intraservice,dc=corp --enablecache --kickstart --updateall'
+#- name: Habilitar ldap via authconfig
+#  shell: authconfig-tui --enableldap --enableldapauth --ldapserver="ldaps://ldpcor70001ah-vip.intraservice.corp:636 ldaps://ldpcor70008p.intraservice.corp:636 ldaps://ldpcor70002ah-vip.intraservice.corp:636 ldaps://ldpcor70010p.intraservice.corp:636" --ldapbasedn=ou=prod,dc=intraservice,dc=corp --enablecache --kickstart --updateall
+
+#Item 16 - enable_ldap_prd_dr_XV_RHEL7
+- debug: msg="criando diretório /etc/openldap/certs/"
+#- name: criação de diretorio /etc/openldap/certs/
+#   file:
+#    path: /etc/openldap/certs/
+#    state: directory
+#    owner: root
+#    group: root
+#    mode: 0766
+
+#Item 16 - enable_ldap_prd_dr_XV_RHEL7
+- debug: msg="Ajuste de configuração de autenticação"
+#- name: Ajuste de configuração de autenticação
+#  copy:
+#    src: "{{ item.src }}"
+#    dest: "{{ item.dest }}"
+#    owner: "{{ item.owner }}"
+#    group: "{{ item.group }}"
+#    mode: "{{ item.mode }}"
+#      - { src: ldap.conf, dest: /etc/openldap/ldap.conf, owner: root , group:root , mode: 0644 }
+#      - { src: ldap.secrets, dest: /etc/openldap/ldap.secrets, owner: root, group: root, mode: 0400 }
+#      - { src: SECCOR0101P_base64.cer, dest: /etc/openldap/certs/SECCOR0101P_base64.cer, owner: root, group: root, mode: 0644 }
+#      - { src: cacert-bovespa-2034.cer, dest: /etc/openldap/certs/cacert-bovespa-2034.cer, owner: root, group: root, mode: 0644 }
+#      - { src: SECCOR0103P_base64.cer, dest: /etc/openldap/certs/SECCOR0103P_base64.cer, owner: root, group: root, mode: 0644 }
+#      - { src: sshd, dest: /etc/pam.d/sshd, owner: root, group: root, mode: 0644 }
+#      - { src: login, dest: /etc/pam.d/login, owner: root, group: root, mode: 0644 }
+#      - { src: nslcd.conf, dest: /etc/nslcd.conf, owner: root, group: root, mode: 0644 }
+#  register: conf_ldap
+#  notify: restart nslcd
+
+#Item 16 - enable_ldap_prd_dr_XV_RHEL7
+- debug: msg="Criando links simbolicos ldap.conf"
+#- name: Criando links simbolicos ldap.conf
+#  file:
+#    src: "{{ item.src }}"
+#    dest: "{{ item.dest }}"
+#    state: link
+#  with_item:
+#    - { src: /etc/openldap/ldap.conf, dest: /etc/ldap.conf }
+#    - { src: /etc/openldap/ldap.secrets, dest: /etc/ldap.secrets }
+#
+
+#Item 16 - enable_ldap_prd_dr_XV_RHEL7
+- debug: msg="Executando comandos authconfig"
+#- name: Executando comandos authconfig
+#  shell: authconfig --enablemkhomedir --update
+#  when: conf_ldap.changed
+#  register: authconfig
+
+#Item 16 - enable_ldap_prd_dr_XV_RHEL7
+- debug: msg="estart do serviço nslcd"
+#- name: Restart do serviço nslcd
+#  service:
+#    name: nslcd
+#    state: restarted
+#    enabled: yes
+#  when: conf_ldap.changed or authconfig.changed
+
+
+#Item 17 - kill_tail_vi_vim_less_more
+- name: Ajuste do vim, tail e kill
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    mode: 0755
+  with_items:
+    - { src: vim.sh, dest: /etc/profile.d/vim.sh, owner: root, group: root }
+    - { src: kill_tail_vi_vim_less_more, dest: /etc/cron.daily/kill_tail_vi_vim_less_more, owner: root, group: root }
+
+#Item 18 - remove_chave_root
+- name: Removendo chave do root
+  file:
+    path: /home/root/.ssh/authorized_keys/id_pub.rsa
+    state: absent
+
+#Item 18 - remove_chave_root
+- name: Adicionando as chaves
+  copy:
+    src: authorized_keys
+    dest: /root/.ssh/authorized_keys
+    owner: root
+    group: root
+    mode: 0644
+
+#Item 19 - logwatch
+- name: Check logwatch
+  stat:
+    path: "/etc/cron.daily/*logwatch"
+  register: file_logwatch
+
+#Item 19 - logwatch
+- name: Removendo logwatch
+  file:
+    path: "/etc/cron.daily/*logwatch"
+    state: absent
+  when: file_logwatch.stat.exists == true
+  
+#Item 20 - tmpwatch
+- name: Configure tmwwatch
+  copy:
+    src: tmpwatch
+    dest: /etc/cron.daily/tmpwatch
+    owner: root
+    group: root
+    mode: 0644
+
+#Item 21 - sat_remote_command_rhel7
+- name: Instalação pacotes do satellite 5
+  yum:
+    name: "{{ pkgs_sat5 }}"
+    state: latest
+  when: satellite_server_version == '5'
+  register: install_pkgs_sat5
+
+#Item 21 - sat_remote_command_rhel7
+- name: Configurando comando remoto Satellite
+  shell: rhn-actions-control --enable-run
+  when: satellite_server_version == '5'
+  
+#Item 21 - sat_remote_command_rhel7
+- name: Criando diretório e arquivos
+  file:
+    path: "{{ item.path }}"
+    state: "{{ item.state }}" 
+  with_items:
+    - { path: /etc/sysconfig/rhn/allowed-actions/script, state: directory }
+    - { path: /etc/sysconfig/rhn/allowed-actions/script/run, state: touch }
+  when: satellite_server_version == '5'
+
+# fazendo include de um arquivos so com as configurações de hardening
+- include: hardening.yml
+
+
+

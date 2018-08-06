@@ -1,0 +1,6 @@
+#!/bin/sh
+
+killall -9 tail vi vim less more >/dev/null 2>&1
+find /apps /home -name ".*.swp" -delete >/dev/null 2>&1
+
+exit 0

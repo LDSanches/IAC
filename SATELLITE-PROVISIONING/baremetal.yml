@@ -1,0 +1,41 @@
+---
+- name: Provisionaing server baremetal
+  hosts: 10.0.60.100
+  vars:
+    - name_server:
+    - profile:  
+    - mac1:
+    - vlan_verde:
+    - mac2:
+    - vlan_vermelha:
+
+  tasks:
+
+  - name: Provisinamento do host "{{ name_server }}"
+    shell: hammer host create --name "{{ name_server }}" --comment "Provisionamento Baremetal via ansible" --organization "B3" --location "SP" --hostgroup "{{ profile }}" --build "True" --enabled "true" --enabled "true" --managed "true" --interface="primary=true,provision=true,type=interface,subnet_id=1,mac={{ mac1 }},ip={{ vlan_verde }}" --interface="provision=false,type=interface,subnet_id=3,mac={{ mac3 }},ip={{ vlan_vermelha }}" 
+
+    #shell: hammer host create --name "{{ name_server }}" --comment "Provisionamento Basemetal via ansible" --organization "B3" --location "SP" --hostgroup "{{ profile }}" --mac "{{ mac }}" --build true --enabled true --managed true
+    #shell: hammer host create --name "{{ name_server }}" --comment "Provisionamento Basemetal via ansible" --organization "B3" --location "SP" --hostgroup "{{ profile }}" --compute-resource "labvcenter" --compute-profile "2-Medium" --build "True" --enabled "true" --compute-attributes "start=1"
+
+  - name: Aguardado a conclusao do instalacao
+    shell: "hammer host info --name {{ name_server }}.domain.lab | grep 'IP address:  10.0' | awk '{print $3}'"
+    register: ip_name_server
+
+  - debug: var=ip_name_server
+  
+  #- name: Check if we're using the default SSH port
+#    wait_for:
+#      host: "{{ ip_name_server.stdout }}"
+#      port: "22"
+#      state: "started"
+#      host: "{{ inventory_hostname }}"
+#      timeout: "600"
+#      delay: 20
+#    delegate_to: "localhost"
+#    ignore_errors: "yes"
+#    register: check
+#
+#  
+#  - debug: msg='valor da variavel "{{ ip_name_server.stdout }}".'
+#  
+###  - debug: var=check

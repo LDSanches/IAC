@@ -1,0 +1,31 @@
+Cmnd_Alias NETWORKING = /sbin/route, /sbin/ifconfig, /bin/ping, /sbin/dhclient, /usr/bin/net, /sbin/iptables, /usr/bin/rfcomm, /usr/bin/wvdial, /sbin/iwconfig, /sbin/mii-tool
+Cmnd_Alias SOFTWARE = /bin/rpm, /usr/bin/up2date, /usr/bin/yum
+Cmnd_Alias SERVICES = /sbin/service, /sbin/chkconfig
+Cmnd_Alias LOCATE = /usr/bin/updatedb
+Cmnd_Alias STORAGE = /sbin/fdisk, /sbin/sfdisk, /sbin/parted, /sbin/partprobe, /bin/mount, /bin/umount
+Cmnd_Alias DELEGATING = /usr/sbin/visudo, /bin/chown, /bin/chmod, /bin/chgrp
+Cmnd_Alias PROCESSES = /bin/nice, /bin/kill, /usr/bin/kill, /usr/bin/killall
+Cmnd_Alias DRIVERS = /sbin/modprobe
+Cmnd_Alias ACCESSFULL = /usr/kerberos/sbin/*,/usr/kerberos/bin/*,/usr/local/sbin/*,/usr/local/bin/*,/sbin/*,/bin/*,/usr/sbin/*,/usr/bin/*,!/bin/su,!/usr/sbin/visudo
+Cmnd_Alias VIPRMGMT = /usr/bin/sudo, /bin/su, /bin/sh, /dev/mapper/control, /usr/sbin/dmidecode, /sbin/e2fsck, /sbin/fdisk, /sbin/multipath, /sbin/ifconfig, /sbin/vgdisplay, /usr/bin/sh, /bin/mkdir, /sbin/mke2fs, /sbin/mkfs.ext3, /sbin/mkfs.ext4, /bin/mount, /bin/umount, /sbin/resize2fs, /sbin/iscsiadm, /usr/bin/lsb_release, /sbin/lvcreate, /sbin/lvchange, /sbin/lvremove, /sbin/lvresize, /sbin/pvcreate, /sbin/pvremove, /bin/rpm, /sbin/vgchange, /sbin/vgremove, /sbin/vgextend, /sbin/vgreduce, /sbin/vgcreate, /sbin/powermnt, /bin/find, /bin/sed, /bin/ls, /bin/sleep, /bin/rm, /home/_svcvipradminp/emcsrm/LunMappingDetection.pl, /sbin/multipath, /usr/sbin/lvs, /sbin/lvs, /home/_svcvipradminp/inq, /tmp/inq, /usr/bin/sar, /usr/sbin/vgs, /sbin/powermt, /etc/powermt, /usr/sbin/powermt, /sbin/pvs, /usr/sbin/pvs, /sbin/vxdisk, /usr/sbin/vxprint, /usr/sbin/vxdisk, /sbin/lvm, /sbin/lvdisplay, /sbin/vgs, /bin/df, /usr/bin/df, /sbin/dmidecode, /usr/bin/dmidecode, /usr/sbin/swap, /usr/bin/iostat, /bin/iostat, /usr/sbin/iostat, /sbin/iostat, /usr/sbin/mount, /usr/sbin/lsattr, /usr/sbin/lsdev, /usr/sbin/lscfg, /usr/sbin/lsdevinfo, /usr/sbin/lsvg, /usr/bin/vxdisk, /sbin/zpool, /usr/bin/mpstat, /sbin/zfs, /usr/sbin/prtdiag, /usr/bin/kstat, /usr/bin/bdf, /usr/sbin/lvdisplay, /usr/sbin/vgdisplay, /usr/sbin/ifconfig, /usr/sbin/swapinfo, /opt/sfm/bin/CIMUtil, /usr/sbin/kdb, /usr/bin/tar
+
+Defaults    requiretty
+Defaults    env_reset
+Defaults    env_keep = "COLORS DISPLAY HOSTNAME HISTSIZE INPUTRC KDEDIR                         LS_COLORS MAIL PS1 PS2 QTDIR USERNAME                         LANG LC_ADDRESS LC_CTYPE LC_COLLATE LC_IDENTIFICATION                         LC_MEASUREMENT LC_MESSAGES LC_MONETARY LC_NAME LC_NUMERIC                         LC_PAPER LC_TELEPHONE LC_TIME LC_ALL LANGUAGE LINGUAS                         _XKB_CHARSET XAUTHORITY"
+
+Defaults:_svcvipradminp !requiretty
+
+root    ALL=(ALL) ALL
+_svcvipradminp                  ALL=(ALL)       VIPRMGMT
+oracle    ALL=(ALL) ALL
+%adm-csui-dba   ALL=(ALL)       ALL
+%adm-gsui-suporte  ALL=(ALL)       ALL
+_svcpuma   ALL=(ALL)       ALL
+%cgiaadm   ALL=ACCESSFULL
+%adm-cdci-implementacao  ALL=ACCESSFULL
+%suportepostradingadm  ALL=ACCESSFULL
+%suportetradingadm  ALL=ACCESSFULL
+%adm-di-coti-suporte  ALL=ACCESSFULL
+### UTILIZAR APENAS PARA SERVIDORES DO SAP ###
+#%SAP    ALL=ACCESSFULL
+##############################################

@@ -1,0 +1,8 @@
+---
+- name: instalacao do oracle rac
+  hosts: all
+  roles:
+#    - oracle-rac
+    - req-oracle-rac
+    - ins-oracle-rac
+

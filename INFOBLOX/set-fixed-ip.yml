@@ -1,0 +1,26 @@
+---
+  - name:
+    hosts: localhost
+    gather_facts: no
+    vars:
+      user: admin
+      password: infoblox
+      infoblox: 10.0.60.52
+      network: 10.0.0.0/16
+      fqdn: intranet.int
+      ip: 10.0.0.4
+      host_name: testexxx.intranet.int
+
+    tasks:
+    - name: Register IP
+      uri:
+        url: https://{{infoblox}}/wapi/v1.4.1/fixedaddress
+        method: POST
+        user: "{{ user }}"
+        password: "{{ password }}"
+        body: { "ipv4addr":"{{ ip }}","name":"{{ host_name }}","match_client":"RESERVED" }
+        force_basic_auth: yes
+        status_code: 201
+        validate_certs: no
+        body_format: json
+

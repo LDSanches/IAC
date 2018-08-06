@@ -1,0 +1,41 @@
+---
+# tasks file for ins-oracle-rac
+
+- name: Copiando Binários Oracle Rac
+  copy:
+    src: "{{ item.src }}" 
+    dest: "{{ item.dest }}"
+    owner: oracle
+    group: dba
+    mode: 0755
+  with_items: "{{ binario_oracle }}"
+
+- name: descompactando Binários Oracle Rac linuxamd64_12102_database_1of2.zip
+  unarchive:
+    src: /home/oracle/software/linuxamd64_12102_database_1of2.zip
+    dest: /home/oracle/software/
+    remote_src: yes
+
+
+- name: descompactando Binários Oracle Rac linuxamd64_12102_database_2of2.zip
+  unarchive:
+    src: /home/oracle/software/linuxamd64_12102_database_2of2.zip
+    dest: /home/oracle/software/
+    remote_src: yes
+
+
+- name: descompactando Binários Oracle Rac linuxamd64_12102_grid_1of2.zip
+  unarchive:
+    src: /home/oracle/software/linuxamd64_12102_grid_1of2.zip
+    dest: /home/oracle/software/
+    remote_src: yes
+
+
+- name: descompactando Binários Oracle Rac linuxamd64_12102_grid_2f2.zip
+  unarchive:
+    src: /home/oracle/software/linuxamd64_12102_grid_2of2.zip
+    dest: /home/oracle/software/
+    remote_src: yes
+
+#- name: Teste do eval
+#  shell: eval $(grep -v 'vip\|local\|scan\|\#\|^$' /etc/hosts |awk '{printf " echo \"ssh -q -o StrictHostKeyChecking=no "$1"\" \n; ssh -q -o StrictHostKeyChecking=no "$1" date \n; echo \"ssh -q -o StrictHostKeyChecking=no "$2"\" \n; ssh -q -o StrictHostKeyChecking=no "$2" date \n; echo \"ssh -q -o StrictHostKeyChecking=no "$3"\" \n; ssh -q -o StrictHostKeyChecking=no "$3" date \n;"}')

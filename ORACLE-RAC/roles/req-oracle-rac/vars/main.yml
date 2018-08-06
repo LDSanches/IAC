@@ -1,0 +1,93 @@
+---
+# vars file for oracle-rac
+pkgs_common:
+- binutils
+- compat-libcap1
+- nfs-utils
+- compat-libstdc++-33
+- gcc
+- gcc-c++
+- glibc-devel
+- ksh
+- libgcc
+- libstdc++
+- libstdc++-devel
+- libXext
+- libXtst
+- libxcb
+- libXmu
+- libXxf86dga
+- libX11
+- libXau
+- libaio
+- libaio-devel
+- libdmx
+- glibc
+- make
+- sysstat
+- xorg-x11-utils
+- xorg-x11-xauth
+- libXv
+- libXi
+- libXt
+- libXxf86misc
+- libXxf86vm
+- device-mapper-multipath
+- device-mapper-multipath-libs
+- kmod-oracleasm
+- ntp
+- psmisc
+
+pkgs_asmlib:
+- "/root/oracleasmlib-2.0.12-1.el7.x86_64.rpm"
+- "/root/oracleasm-support-2.1.8-3.el7.x86_64.rpm"
+
+oracle_dir:
+- /opt/oracle
+- /opt/grid
+- /opt/oraInventory
+- /home/oracle/software
+
+oracle_groups:
+ - { group: dba, gid: 3000 } 
+
+oracle_users:
+- { username: oracle, uid: 3000, primgroup: 3000, passwd: "$6$rounds=656000$pgy6PYnA27iwyAgR$PVHlodOkJjRhsaht4Wuf/IBVIDgC.zvx3Ih.dV9bB6LWCr/EJTma2Uyk6nKRHqi4v2qNx2/xWTmKbZmUYI0mf." }
+
+
+sysctl_oracle:
+- { name: net.ipv4.ip_local_port_range, value: 9000 65500 }
+- { name: net.core.rmem_default, value: 262144 }
+- { name: net.core.rmem_max, value: 4194304 }
+- { name: net.core.wmem_default, value: 262144 }
+- { name: net.core.wmem_max, value: 1048576 }
+- { name: fs.file-max, value: 6815744 }
+- { name: fs.aio-max-nr, value: 1048576 }
+- { name: kernel.sem, value: 250 32000 100 128 }
+- { name: vm.dirty_background_ratio, value: 3 }
+- { name: vm.dirty_ratio, value: 80 }
+- { name: vm.dirty_expire_centisecs, value: 500 }
+- { name: vm.dirty_writeback_centisecs, value: 100 }
+- { name: vm.swappiness, value: 0 }
+
+ssh_keys:
+- /tmp/id_rsa
+- /tmp/id_rsa.pub
+- /tmp/authorized_keys
+keyfile: /tmp/known_hosts
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

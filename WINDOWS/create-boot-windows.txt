@@ -1,0 +1,27 @@
+1) Instalar Windows ADK
+c:\> cd "c:\Program Files (x86)\Windows Kits\10\Assessment and Development Kit\Development Tools"
+
+> copype amd64 c:\winpe64
+> dism /Mount-Image /imagefile:c:\winpe64\media\sources\boot.wim /index:1 /mountdir:c:\winpe64\mount
+
+dism /add-driver /image:c:\winpe64\mount /driver:"D:\Vmware_Drivers\VMWare\VMWare Tools\VMWare\Drivers\vmxnet3\NDIS5\vmxnet3ndis5.inf"
+dism /add-driver /image:c:\winpe64\mount /driver:"D:\Vmware_Drivers\VMWare\VMWare Tools\VMWare\Drivers\vmxnet3\NDIS6\vmxnet3ndis6.inf"
+dism /add-driver /image:c:\winpe64\mount /driver:"D:\Vmware_Drivers\VMWare\VMWare Tools\VMWare\Drivers\pvscsi\pvscsi.inf"
+dism /add-driver /image:c:\winpe64\mount /driver:"D:\Vmware_Drivers\VMWare\VMWare Tools\VMWare\Drivers\pvscsi"
+dism /add-driver /image:c:\winpe64\mount /driver:"D:\Vmware_Drivers\VMWare\VMWare Tools\VMWare\Drivers\mouse\vmusbmouse.inf"
+dism /add-driver /image:c:\winpe64\mount /driver:"D:\Vmware_Drivers\VMWare\VMWare Tools\VMWare\Drivers\vmci\device\vmci.inf"
+dism /add-driver /image:c:\winpe64\mount /driver:"D:\Vmware_Drivers\VMWare\VMWare Tools\VMWare\Drivers\video_wddm\vm3d.inf"
+dism /add-driver /image:c:\winpe64\mount /driver:"D:\Vmware_Drivers\VMWare\VMWare Tools\VMWare\Drivers\video_xpdm\vmx_svga.inf"
+
+> dism /get-drivers /image:c:\winpe64\mount
+
+> notepad.exe c:\winpe64\mount\Windows\System32\startnet.cmd
+wpeinit
+net use z: \\10.0.0.121\softwares\windows\w2k12r2 /user:_svcansible suporte
+z:\setup.exe /unattend:"z:\Unattend-BMF.xml"
+
+> dism /Unmount-Image /mountdir:c:\winpe64\mount /commit
+> makewinpemedia /iso c:\winpe64 d:\Softwares\Windows\windows-boot-w2k12r2-64.iso
+
+> scp d:\Softwares\Windows\windows-boot-w2k12r2-64.iso root@10.0.60.100:/var/lib/tftpboot/boot
+

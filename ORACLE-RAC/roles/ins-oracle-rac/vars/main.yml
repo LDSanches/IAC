@@ -1,0 +1,15 @@
+---
+# vars file for ins-oracle-rac
+binario_oracle:
+- {src: linuxamd64_12102_database_1of2.zip, dest: /home/oracle/software/linuxamd64_12102_database_1of2.zip }
+- {src: linuxamd64_12102_database_2of2.zip, dest: /home/oracle/software/linuxamd64_12102_database_2of2.zip }
+- {src: linuxamd64_12102_grid_1of2.zip, dest: /home/oracle/software/linuxamd64_12102_grid_1of2.zip }
+- {src: linuxamd64_12102_grid_2of2.zip, dest: /home/oracle/software/linuxamd64_12102_grid_2of2.zip }
+
+unarchive_binario_oracle:
+- {src: /home/oracle/software/linuxamd64_12102_database_1of2.zip, dest: /home/oracle/software/linuxamd64_12102_database_1of2 }
+- {src: /home/oracle/software/linuxamd64_12102_database_2of2.zip, dest: /home/oracle/software/linuxamd64_12102_database_2of2 }
+- {src: /home/oracle/software/linuxamd64_12102_database_1of2.zip, dest: /home/oracle/software/linuxamd64_12102_database_1of2 }
+- {src: /home/oracle/software/linuxamd64_12102_database_1of2.zip, dest: /home/oracle/software/linuxamd64_12102_database_1of2 }
+
+

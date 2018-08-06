@@ -1,0 +1,102 @@
+---
+- name: Installing Cluster Service
+  hosts: all
+  vars:
+    - WindowsFeatureName: Failover-Clustering
+    - Server1: nodews01
+    - Server2: nodews02
+    - ClusterStaticAddress: 192.168.6.14
+    - ClusterName: MyCluster
+    - ADInfoPath: CN=MyCluster,DC=domain,DC=lab
+    - NodeAndDiskMajority: Cluster Disk 7
+    - AGgrp: DTCag1
+    - WSFC: (Get-Cluster).Name
+    - DTCnetwk: Cluster Network 1
+    - ClusterAvailableDisk: Cluster Disk 3
+    - DTCdisk: DTCDisk1
+    - DTCipresnm: DTCIP1
+    - DTCipaddr: 192.168.6.15
+    - DTCsubnet: 255.255.255.0
+    - DTCnetnm: DTCNet1
+    - DTCresnm: DTC1
+    
+  tasks:
+  - name: Install Windows Feature - Executed in all servers
+    win_command: Install-WindowsFeature -Name "{{ WindowsFeatureName }}" -IncludeManagementTools
+
+    hosts: 
+    tasks:
+       - name: Installing Cluster Service
+         win_command: New-Cluster -Name "{{ ClusterName }}" -Node "{{ Server1 }}", "{{ Server2 }}" -StaticAddress "{{ ClusterStaticAddress }}"
+
+       - name: Criar de Entrada no Active Directory
+         win_command: New-Cluster -Name "{{ ADInfoPath }}" -Node "{{ Server1 }}", "{{ Server2 }}"
+
+       - name: Definir Cluster Majority
+         win_command: Set-ClusterQuorum -NodeMajority
+
+       - name: Definir Disco para o Quorum
+         win_command: Set-ClusterQuorum -NodeAndDiskMajority "{{ NodeAndDiskMajority }}"
+
+       - name: Create DTC Resources
+         win_command: "{{ item }}"
+         with_items:
+            - $AGgrp = "{{ AGgrp }}";
+            - $WSFC = "{{ WSFC }}";
+            - $DTCnetwk = "{{ DTCnetwk }}";
+            - $ClusterAvailableDisk = "{{ ClusterAvailableDisk }}";
+            - $DTCdisk = "{{ DTCdisk }}";
+            - $DTCipresnm = "{{ DTCipresnm }}";
+            - $DTCipaddr = "{{ DTCipaddr }}";
+            - $DTCsubnet = "{{ DTCsubnet }}";
+            - $DTCnetnm = "{{ DTCnetnm }}";
+            - $DTCresnm = "{{ DTCresnm }}";
+   
+       - name: Make a new disk available for use in a failover cluster.
+         win_command: Get-ClusterAvailableDisk | Where {$_.Name -eq $ClusterAvailableDisk} | Add-ClusterDisk;
+   
+       - name: Rename disk
+         win_command: $resource = Get-ClusterResource $ClusterAvailableDisk; $resource.Name = $DTCdisk;
+   
+       - name: Create the IP resource
+         win_command: Add-ClusterResource -Name $DTCipresnm -ResourceType "IP Address" -Group $AGgrp;
+   
+       - name: Set the network to use, IP address, and subnet. All three have to be configured at the same time
+         win_command: 
+            - $DTCIPres = Get-ClusterResource $DTCipresnm;
+            - $ntwk = New-Object Microsoft.FailoverClusters.PowerShell.ClusterParameter $DTCipres,Network,$DTCnetwk;
+            - $ipaddr = New-Object Microsoft.FailoverClusters.PowerShell.ClusterParameter $DTCipres,Address,$DTCipaddr;
+            - $subnet = New-Object Microsoft.FailoverClusters.PowerShell.ClusterParameter $DTCipres,SubnetMask,$dtcsubnet;
+            - $setdtcipparams = $ntwk,$ipaddr,$subnet;
+            - $setdtcipparams | Set-ClusterParameter;
+   
+       - name: Create the Network Name resource
+         win_command: Add-ClusterResource $DTCnetnm -ResourceType "Network Name" -Group $AGgrp;
+   
+       - name: Set the value for the Network Name resource
+         win_command: Get-ClusterResource $DTCnetnm | Set-ClusterParameter DnsName $DTCresnm;
+   
+       - name: Add the IP address as a depenency of the Network Name resource
+         win_command: Add-ClusterResourceDependency $DTCnetnm $DTCipresnm;
+   
+       - name: Create the Distributed Transaction Coordinator resource
+         win_command: Add-ClusterResource $DTCresnm -ResourceType "Distributed Transaction Coordinator" -Group $AGgrp;
+   
+       - name: Add the Network Name as a depenency of the DTC resource
+         win_command: Add-ClusterResourceDependency $DTCresnm $DTCnetnm;
+   
+       - name: Move the disk into the resource group with SQL Server
+         win_command: Move-ClusterResource -Name $DTCdisk -Group $AGgrp;
+   
+       - name: Add the disk as a depenency of the DTC resource
+         win_command: Add-ClusterResourceDependency $DTCresnm $DTCdisk;
+   
+       - name: Bring the IP resource online
+         win_command: Start-ClusterResource $DTCipresnm;
+   
+       - name: Bring the Network Name resource online
+         win_command: Start-ClusterResource $DTCnetnm;
+   
+       - name: Bring the DTC resource online
+         win_command: Start-ClusterResource $DTCresnm;
+

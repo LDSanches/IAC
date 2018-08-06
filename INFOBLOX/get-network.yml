@@ -1,0 +1,15 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: False
+
+  tasks:
+  - name: Get Network
+    infoblox:
+      server: 10.0.60.52
+      username: admin
+      password: infoblox
+      action: get_network
+      network: 192.168.6.0/24
+    register: infoblox
+  - debug: var=infoblox

@@ -1,0 +1,88 @@
+---
+- name: Configuraçao ADM SWITCH NEXUS 5k
+  hosts: all
+  connection: local
+  gather_facts: yes
+  vars:
+    - interface_switchport_protected:
+    - vlan_switchport_protected:
+    - description_switchport_protected:
+    - interface_no_switchport_protected:
+    - vlan_no_switchport_protected:
+    - description_no_switchport_protected:
+    - vlan_community_private_vlan:
+    - vlan_community_private_vlan_association:
+    - vlan_isolated_vlan:
+    - vlan_isolated_vlan_association:
+    - vlan_promisc:
+  tasks:
+
+  - name: executando show version no switch
+    ios_command:
+      commands: show version
+      register: show_version
+
+  - debug: var=show_version
+
+  - name: Configuração com o Switchport protected
+    nxos_config:
+      lines:
+        - interface "{{ interface_switchport_protected }}"
+        - description "{{ vlan_switchport_protected }} "
+        - switchport access vlan "{{ description_switchport_protected }}"
+        - switchport mode access
+        - switchport protected
+        - switchport block multicast
+        - switchport block unicast
+        - load-interval 30
+        - storm-control broadcast level 2.00
+        - storm-control action trap
+        - spanning-tree portfast
+        - spanning-tree bpdufilter enable
+        - speed auto
+        - duplex auto
+        - no shut
+
+  - name: Configuração sem o Switchport protected
+    nxos_config:
+      lines:
+        - interface "{{ interface_no_switchport_protected }}"
+        - description "{{ vlan_no_switchport_protected }}"
+        - switchport access vlan "{{ description_no_switchport_protected }}"
+        - switchport mode access
+        - load-interval 30
+        - storm-control broadcast level 2.00
+        - storm-control action trap
+        - spanning-tree portfast
+        - spanning-tree bpdufilter enable
+        - speed auto
+        - duplex auto
+        - no shut
+    
+  - name: Configuração de Interface Community (Private VLan)
+    nxos_config:
+      lines:
+        - vlan "{{ vlan_community_private_vlan }}"
+        - name pri-community-gerfw
+        - private-vlan primary
+        - private-vlan association "{{ vlan_community_private_vlan_association }}"
+        - vlan "{{ vlan_community_private_vlan_association }}"
+        - name community1-gerfw
+        - private-vlan community
+
+  - name: Configuração de Interface isolada
+    nxos_config:
+      lines:
+        - vlan "{{ vlan_isolated_vlan }}"
+        - name pri-isolated-redes
+        - private-vlan primary
+        - private-vlan association "{{ vlan_isolated_vlan_association }}"
+        - vlan "{{ vlan_isolated_vlan_association }}"
+        - name isolated-redes
+        - private-vlan isolated
+
+  - name: Configuração de Interface promiscua
+    nxos_config:
+      lines:
+        - vlan "{{ vlan_promisc }}"
+        - name pri-promisc-geral

@@ -1,0 +1,23 @@
+---
+# handlers file for linux_post_install
+#
+
+- name: Reload_ssh
+  service:
+    name: sshd
+    state: reloaded
+    enabled: yes
+
+- name: Reload_chronyd
+  service:
+    name: chronyd
+    state: restarted
+    enabled: yes
+
+- name: Reload_audit
+  service:
+    name: auditd.service
+    state: reloaded
+    enabled: yes
+
+

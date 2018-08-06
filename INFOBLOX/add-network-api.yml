@@ -1,0 +1,44 @@
+---
+  - name:
+    hosts: localhost
+    gather_facts: no
+    vars:
+      user: admin
+      password: infoblox
+      infoblox: 10.0.60.52
+      network: 192.168.6.0/24
+      fqdn: intranet.int
+      start_ip_v4: 192.168.6.90
+      end_ip_v4: 192.168.6.100
+
+    tasks:
+
+    - name: Create a Network
+      uri:
+        url: https://{{infoblox}}/wapi/v1.4.1/network
+        method: POST
+        user: "{{ user }}"
+        password: "{{ password }}"
+        body:
+            { "network": "{{network}}" }
+        force_basic_auth: yes
+        status_code: 201
+        validate_certs: no
+        body_format: json
+      register: network
+    - debug: var=network.json
+
+    - name: DHCP Range
+      uri:
+        url: https://{{infoblox}}/wapi/v1.4.1/range
+        method: POST
+        user: "{{ user }}"
+        password: "{{ password }}"
+        body:
+            {"start_addr": "{{ start_ip_v4 }}","end_addr": "{{ end_ip_v4 }}" }
+        force_basic_auth: yes
+        status_code: 201
+        validate_certs: no
+        body_format: json
+      register: network
+    - debug: var=network.json

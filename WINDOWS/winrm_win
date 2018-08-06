@@ -1,0 +1,32 @@
+allow remote execution 
+winrm configSDDL default
+
+netsh advfirewall firewall set rule group="remote administration" new enable=yes
+netsh advfirewall firewall add rule name="Open Port 5985" dir=in action=allow protocol=TCP localport=5985
+netsh advfirewall firewall add rule name="Open Port 5986" dir=in action=allow protocol=TCP localport=5986
+
+winrm quickconfig -q
+winrm quickconfig -transport:http
+winrm quickconfig -transport:https
+winrm set winrm/config '@{MaxTimeoutms="7200000"}'
+winrm set winrm/config/winrs '@{MaxMemoryPerShellMB="0"}'
+winrm set winrm/config/winrs '@{MaxProcessesPerShell="0"}'
+winrm set winrm/config/winrs '@{MaxShellsPerUser="0"}'
+winrm set winrm/config/service '@{AllowUnencrypted="true"}'
+winrm set winrm/config/service/auth '@{Basic="true"}'
+winrm set winrm/config/client/auth '@{Basic="true"}'
+winrm set winrm/config/client '@{TrustedHosts="*"}'
+
+net stop winrm
+sc.exe config winrm start= auto
+net start winrm
+
+
+
+
+ansible_user: Administrator
+ansible_password: SecretPasswordGoesHere
+ansible_port: 5985 / 5986
+ansible_connection: winrm
+# The following is necessary for Python 2.7.9+ (or any older Python that has backported SSLContext, eg, Python 2.7.5 on RHEL7) when using default WinRM self-signed certificates:
+ansible_winrm_server_cert_validation: ignore

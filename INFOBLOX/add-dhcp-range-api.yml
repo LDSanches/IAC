@@ -1,0 +1,26 @@
+---
+  - name:
+    hosts: localhost
+    gather_facts: no
+    vars:
+      user: admin
+      password: infoblox
+      infoblox: 10.0.60.52
+      #network: 10.0.0.0/16
+      network: 192.168.6.0/24
+      fqdn: intranet.int
+
+    tasks:
+
+    - name: Get Network
+      uri:
+        url: https://{{infoblox}}/wapi/v1.4.1/network?network={{network}}
+        method: GET
+        user: "{{ user }}"
+        password: "{{ password }}"
+        force_basic_auth: yes
+        status_code: 200
+        validate_certs: no
+        body_format: json
+      register: network
+    - debug: var=network.json

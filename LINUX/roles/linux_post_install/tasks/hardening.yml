@@ -1,0 +1,189 @@
+
+- name: Hardening CIS.conf
+  copy:
+    src: CIS.conf
+    dest: /etc/modprobe.d/CIS.conf
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Removendo os modulos
+  shell: modprobe -r -v "{{ item }}"
+  with_items:
+    - cramfs
+    - freevxfs
+    - jffs2
+    - hfs
+    - hfsplus
+    - squashfs
+    - udf
+    - vfat
+    - dccp
+    - sctp
+    - rds
+    - tipc
+
+- name: Desabilitando serviços
+  service:
+    name: "{{ item }}"
+    state: stopped
+    enabled: no
+  with_items:
+    - autofs
+    - avahi-daemon
+    - cups
+    - dovecot
+    - snmpd
+    - auditd
+  ignore_errors: yes
+
+- name: Removendo pacotes
+  yum:
+    name: "{{ pkgs_remove }}"
+    state: absent
+    
+- name: removendo GSI
+  lineinfile:
+    path: /etc/sysctl.conf
+    regexp: 'GSI'
+    state: absent
+
+- name: GSI Definition Baseline Hardening
+  shell: "echo # 'GSI Definition Baseline Hardening' >> /etc/sysctl.conf"
+
+- name: Recommended sysctl
+  sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    state: present
+    reload: yes
+#  ignore_errors: yes
+  with_items: "{{ hardening_sysctl }}"
+
+- name: Ajustes dos arquivos de auditd.conf
+  lineinfile:
+    path: '/etc/audit/auditd.conf'
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  with_items:
+    - { regexp: "max_log_file = 8", line: "max_log_file = 100" }
+    - { regexp: "space_left_action = SYSLOG", line: "space_left_action = email" }
+    - { regexp: "admin_space_left_action = SUSPEND", line: "admin_space_left_action = halt" }
+    - { regexp: "max_log_file_action = ROTATE", line: "max_log_file_action = keep_logs" }
+
+
+- name: Configurado audit=1
+  copy:
+    src: grub
+    dest: /etc/default/grub
+    owner: root
+    group: root
+    mode: 0644
+  register: grub_audit
+
+- name: Gerando um novo grub2-mkconfig
+  shell: grub2-mkconfig -o /boot/grub2/grub.cfg
+  when: grub_audit.changed
+
+- name: Ajustando permissao do etc/crontab e /etc/cron.d
+  file:
+    path: "{{ item }}"
+    owner: root
+    group: root
+    mode: 0644
+  with_items:
+    - /etc/crontab
+    - /etc/cron.d
+
+- name: Ajuste do arquivo /etc/default/useradd
+  lineinfile:
+    path: /etc/default/useradd
+    regexp: 'INACTIVE=-1'
+    line: 'INACTIVE=30'
+
+- name: configurando audit.rules
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: root
+    group: root
+    mode: 0600
+  with_items:
+    - { src: rules.d_audit.rules, dest: /etc/audit/rules.d/audit.rules }
+    - { src: audit_audit.rules, dest: /etc/audit/rules.d/audit.rules }
+  register: audit_rules
+  notify: Reload_audit
+
+- name: executando auditctl -R /etc/audit/rules.d/audit.rules
+  shell: auditctl -R /etc/audit/rules.d/audit.rules
+  when: audit_rules.changed
+
+- name: Ajuste de permissao boot.log cron spooler secure messages
+  file:
+    path: "{{ item }}"
+    owner: root
+    group: root
+    mode: 0640
+  with_items: "{{ permission_file }}"
+
+- name: configurando at.allow e cron.allow
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: root
+    group: root
+    mode: 0600
+  with_items:
+    - { src: cron.allow, dest: /etc/cron.allow }
+    - { src: at.allow, dest: /etc/at.allow }
+  register: cron_at_file
+
+- name: restart cron e at
+  service:
+    name: "{{ item }}"
+    state: restarted
+    enabled: yes
+  when: cron_at_file.changed
+  with_items:
+    - crond.service
+    - atd.service
+  ignore_errors: yes
+
+- name: removendo cron.deny e at.deny
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - /etc/cron.deny
+    - /etc/at.deny
+  ignore_errors: yes
+
+- name: Ajuste criptografia
+  replace:
+    dest: "{{ item.path }}"
+    regexp: "{{ item.regexp }}"
+    replace: "{{ item.replace }}"
+  with_items:
+    - { path: /etc/pam.d/password-auth, regexp: 'sha256', replace: 'sha512' }
+    - { path: /etc/pam.d/system-auth, regexp: 'sha256', replace: 'sha512' }
+    - { path: /etc/libuser.conf, regexp: 'sha256', replace: 'sha512' }
+    - { path: /etc/login.defs, regexp: 'sha256', replace: 'sha512' }
+
+
+- name: Ajustando pwquality.conf
+  copy:
+    src: pwquality.conf
+    dest: /etc/security/pwquality.conf
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Ajustando dos arquivos de login
+  copy:
+    src: login.defs
+    dest: /etc/login.defs
+    owner: root
+    group: root
+    mode: 0644
+
+

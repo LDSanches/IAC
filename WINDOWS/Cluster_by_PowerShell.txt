@@ -1,0 +1,86 @@
+Install Cluster service
+
+Executar em cada servidor
+	Install-WindowsFeature –Name Failover-Clustering –IncludeManagementTools
+
+Instalando o serviço de cluster
+	New-Cluster –Name MyCluster –Node Server1, Server2 –StaticAddress 192.168.1.12
+
+Criar de Entrada no Active Directory
+	New-Cluster -Name CN=MyCluster,OU=Cluster,DC=Contoso,DC=com -Node Server1, Server2
+
+Definir Cluster Majority
+	Set-ClusterQuorum -NodeMajority
+
+Definir Disco para o Quorum
+	Set-ClusterQuorum -NodeAndDiskMajority "Cluster Disk 7"
+
+
+
+ Criar Recurso de DTC
+\<#----------------------------------- Begin User Input -----------------------------------#>
+$AGgrp = "DTCag1";                          # Name of the WSFC resource group that will contain the DTC resource
+
+$WSFC = (Get-Cluster).Name;                 # Windows Failover Cluster name
+$DTCnetwk = "Cluster Network 1"             # WSFC Network to use for the DTC IP address
+
+$ClusterAvailableDisk = "Cluster Disk 3";   # Designated disk that can support failover clustering and is visible to all nodes, but not yet part of the set of clustered disks
+$DTCdisk = "DTCDisk1";                      # Name of the disk to be used with DTC
+
+$DTCipresnm = "DTCIP1";                     # WSFC Friendly Name of the DTC's IP resource 
+$DTCipaddr = "192.168.2.54";                # IP address of the DTC resource 
+$DTCsubnet = "255.255.255.0";               # Subnet for the DTC IP address 
+$DTCnetnm = "DTCNet1";                      # WSFC Friendly Name of the Network Name resource
+$DTCresnm = "DTC1";                         # Name of the WSFC DTC Network Name resource; Name must be unique in AD
+\<#------------------------------------ End User Input ------------------------------------#>
+
+
+# Make a new disk available for use in a failover cluster.
+Get-ClusterAvailableDisk | Where {$_.Name -eq $ClusterAvailableDisk} | Add-ClusterDisk;
+
+# Rename disk
+$resource = Get-ClusterResource $ClusterAvailableDisk; $resource.Name = $DTCdisk;
+
+# Create the IP resource
+Add-ClusterResource -Name $DTCipresnm -ResourceType "IP Address" -Group $AGgrp;
+
+# Set the network to use, IP address, and subnet
+# All three have to be configured at the same time
+$DTCIPres = Get-ClusterResource $DTCipresnm;
+$ntwk = New-Object Microsoft.FailoverClusters.PowerShell.ClusterParameter $DTCipres,Network,$DTCnetwk;
+$ipaddr = New-Object Microsoft.FailoverClusters.PowerShell.ClusterParameter $DTCipres,Address,$DTCipaddr;
+$subnet = New-Object Microsoft.FailoverClusters.PowerShell.ClusterParameter $DTCipres,SubnetMask,$dtcsubnet;
+
+$setdtcipparams = $ntwk,$ipaddr,$subnet;
+$setdtcipparams | Set-ClusterParameter;
+
+# Create the Network Name resource
+Add-ClusterResource $DTCnetnm -ResourceType "Network Name" -Group $AGgrp;
+
+# Set the value for the Network Name resource
+Get-ClusterResource $DTCnetnm | Set-ClusterParameter DnsName $DTCresnm;
+
+# Add the IP address as a depenency of the Network Name resource
+Add-ClusterResourceDependency $DTCnetnm $DTCipresnm;
+
+# Create the Distributed Transaction Coordinator resource
+Add-ClusterResource $DTCresnm -ResourceType "Distributed Transaction Coordinator" -Group $AGgrp;
+
+# Add the Network Name as a depenency of the DTC resource
+Add-ClusterResourceDependency $DTCresnm $DTCnetnm;
+
+# Move the disk into the resource group with SQL Server
+Move-ClusterResource -Name $DTCdisk -Group $AGgrp;
+
+# Add the disk as a depenency of the DTC resource
+Add-ClusterResourceDependency $DTCresnm $DTCdisk;
+
+# Bring the IP resource online
+Start-ClusterResource $DTCipresnm;
+
+# Bring the Network Name resource online
+Start-ClusterResource $DTCnetnm;
+
+# Bring the DTC resource online
+Start-ClusterResource $DTCresnm;
+

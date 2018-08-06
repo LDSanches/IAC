@@ -1,0 +1,17 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: False
+
+  tasks:
+  - name: Get Network
+    infoblox:
+      server: 10.0.60.52
+      username: admin
+      password: infoblox
+      action: get_next_available_ip
+      start_addr: 192.168.6.90
+      end_addr: 192.168.6.100
+      network: 192.168.6.0/24
+    register: infoblox
+  - debug: var=infoblox

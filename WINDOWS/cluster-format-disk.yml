@@ -1,0 +1,18 @@
+- name: Formating Disk
+  hosts: 10.0.33.12
+  gather_facts: no
+
+  tasks:
+  - name: Formating Cluster Disk - Command
+    win_shell: Get-Disk | Where number -eq '1' 
+               #| Initialize-Disk -PartitionStyle MBR -PassThru | New-Partition -AssignDriveLetter -UseMaximumSize | Format-Volume -FileSystem NTFS -NewFileSystemLabel "disk1" -Confirm:$false
+    register: FormattingDisk
+
+#      Get-Disk |
+#      Where partitionstyle -eq 'raw' |
+#      Initialize-Disk -PartitionStyle MBR -PassThru |
+#      New-Partition -AssignDriveLetter -UseMaximumSize |
+#      Format-Volume -FileSystem NTFS -NewFileSystemLabel "disk2" -Confirm:$false
+
+  - debug: var=FormattingDisk
+

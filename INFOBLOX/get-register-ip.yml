@@ -1,0 +1,39 @@
+---
+  - name:
+    hosts: localhost
+    gather_facts: no
+    vars:
+      user: admin
+      password: infoblox
+      infoblox: 10.0.60.52
+      network: 10.0.0.0/16
+      fqdn: intranet.int
+      host_name: testexxx.intranet.int
+      network_id: ZG5zLm5ldHdvcmskMTAuMC4wLjAvMTYvMA
+    tasks:
+
+    - name: Get Next Available IP
+      uri:
+        url: https://{{infoblox}}/wapi/v1.2/network/{{network_id}}?_function=next_available_ip
+        method: POST
+        user: "{{ user }}"
+        password: "{{ password }}"
+        force_basic_auth: yes
+        status_code: 200
+        validate_certs: no
+        body_format: json
+      register: next_ip
+    - debug: var=next_ip.json.ips[0]
+
+    - name: Register IP
+      uri:
+        url: https://{{infoblox}}/wapi/v1.4.1/fixedaddress
+        method: POST
+        user: "{{ user }}"
+        password: "{{ password }}"
+        body: { "ipv4addr":"{{ next_ip.json.ips[0] }}","name":"{{ host_name }}","match_client":"RESERVED" }
+        force_basic_auth: yes
+        status_code: 201
+        validate_certs: no
+        body_format: json
+

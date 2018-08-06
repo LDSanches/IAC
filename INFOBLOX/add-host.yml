@@ -1,0 +1,20 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: False
+  tasks:
+
+  - name: Add host
+    infoblox:
+      server: 10.0.60.52
+      username: admin
+      password: infoblox
+      action: add_host
+      network: 192.168.7.0/24
+      host: "{{ item }}"
+    with_items:
+      - nodelx01a.domain.lab
+      - nodelx02a.domain.lab
+    register: infoblox
+  - debug: var=infoblox
+

@@ -1,0 +1,191 @@
+---
+# tasks file for oracle-rac
+
+- name: Ajuste do scsi ID Oracle
+  copy:
+    src: scsi_id_oracle
+    dest: /etc/scsi_id.config
+
+- name: Ajuste scsi_id e path_sudo
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    mode: 0755
+  with_items:
+    - { src: scsi_id_oracle, dest: /etc/scsi_id.config, owner: root, group: root }
+    - { src: path_sudo.sh, dest: /etc/profile.d/path_sudo.sh, owner: root, group: root }
+
+#- name: Instalacoes de pacotes de dependencia
+#  yum:
+#    name: {{ item }}
+#    state: present
+#  with_items:
+#    - {{ pkgs_install }}
+
+- name: Install common packages RHEL
+  yum: name={{ item }} state=present
+  with_items: "{{ pkgs_common }}"
+
+- name: Transferindo RPM oracleasmlib-2.0.12-1.el7.x86_64.rpm
+  copy:
+    src: oracleasmlib-2.0.12-1.el7.x86_64.rpm
+    dest: /root/oracleasmlib-2.0.12-1.el7.x86_64.rpm
+    owner: root
+    group: root
+    mode: 0755
+
+- name: Tranferindo RPM asmlib oracleasm-support-2.1.8-3.el7.x86_64.rpm,
+  copy:
+    src: oracleasm-support-2.1.8-3.el7.x86_64.rpm
+    dest: /root/oracleasm-support-2.1.8-3.el7.x86_64.rpm
+    owner: root
+    group: root
+    mode: 0755
+
+- name: Install asmlib packages
+  yum: name={{ item }} state=present
+  with_items: "{{ pkgs_asmlib }}"
+ 
+- name: User | Add group(s)
+  group: name={{ item.group }} gid={{ item.gid }} state=present
+  with_items: "{{ oracle_groups }}"
+
+- name: User | Add Oracle user
+  user: name={{ item.username }} group={{ item.primgroup }} generate_ssh_key=yes append=yes password={{ item.passwd }}
+  with_items: "{{oracle_users}}"
+
+- name: Configuracao bashrc oracle
+  copy:
+    src: oracle_bashrc
+    dest: /home/oracle/.bashrc
+    owner: oracle
+    group: dba
+    mode: 0750
+
+- name: Criando diretorio do Oracle
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: oracle
+    group: dba
+    mode: 0755
+  with_items: "{{ oracle_dir }}"
+
+- name: Configure Limits.conf
+  copy:
+    src: limits.conf
+    dest: /etc/security/limits.conf
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Confiuração de tuned profile 1
+  shell: cp -r /usr/lib/tuned/throughput-performance /usr/lib/tuned/throughput-performance-no-thp
+
+- name: Confiuração de tuned profile 2
+  copy:
+    src: tuned.conf
+    dest: /usr/lib/tuned/throughput-performance-no-thp/tuned.conf
+    owner: root
+    group: root
+    owner: 0644
+
+
+- name: restart serviço tuned 
+  service:
+    name: tuned.service
+    state: restarted
+    enabled: yes
+
+- name: set tuned profile
+  shell: tuned-adm profile throughput-performance-no-thp
+
+- name: check hugepage
+  shell: cat /sys/kernel/mm/transparent_hugepage/enabled
+
+#- name: Script de swap
+#  copy:
+#    dest: /tmp/swap.sh
+#    src: swap.sh
+#    owner: root
+#    group: root
+#    mode: 0755
+
+#- name: Exec script de swap
+#  shell: bash /tmp/swap.sh
+#
+- name: backup sysctl;
+  shell: cp /etc/sysctl.conf /etc/sysctl.conf.default
+
+- name: Recommended sysctl
+  sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    state: present
+    reload: yes
+  with_items: "{{ sysctl_oracle }}"
+  
+#- name: ajuste de sysctl dinamico 1
+#  copy:
+#    src: sysctl_dinamico.sh
+#    dest: /tmp/sysctl_dinamico.sh
+#    owner: root
+#    group: root
+#    owner: 0755
+
+#- name: Ajuste de sysctl dinamico 2
+#  shell: bash /tmp/sysctl_dinamico.sh
+
+- name: Desabilitar serviços desnecessários
+  service:
+    name: "{{ item }}"
+    state: stopped
+    enabled: no
+  with_items:
+    - avahi-dnsconfd
+    - avahi-daemon
+    - chronyd.service
+  ignore_errors: yes
+
+- name: Ajuste de time do chrony.conf
+  copy:
+    src: chrony.conf
+    dest: /etc/chrony.conf
+    owner: root
+    group: root
+    mode: 0600
+  notify: Reload_chronyd
+                        
+- name: Ajuste de time ntpd
+  copy:
+    src: ntpd
+    dest: /etc/sysconfig/ntpd
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Removendo IPC
+  replace:
+    path: /etc/systemd/logind.conf
+    regexp: 'RemoveIPC=yes'
+    replace: 'RemoveIPC=no'
+
+- name: Habilitando serviços necessários
+  service:
+    name: ntpd.service
+    state: started
+    enabled: yes
+
+#- name: ssh-keys | Generate SSH keys
+#  shell: ssh-keygen -q -N "" -f /root/id_rsa ; chmod +r /root/id_rsa; cat /root/id_rsa.pub > /tmp/authorized_keys
+#  ignore_errors: True
+#  become: false
+
+#- name: ssh-keys | Add ssh-keys & authorized_keys to oracle user
+#  copy: src={{ item[1] }} dest=/home/{{ item[0].username }}/.ssh  owner={{ item[0].username }} group={{ item[0].primgroup }} force=yes mode=600
+#  when: configure_ssh and configure_cluster
+#  with_nested:
+#    - "{{oracle_users}}"
+###    - "{{ssh_keys}}"
